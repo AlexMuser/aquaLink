@@ -21,6 +21,7 @@ const CompShowReports = () => {
 
   // Agrupar los informes por semana y calcular la suma total de litros
   const monthlyData = reports
+    //Se filtra los datos de acuerdo al mes y año seleccionado
     .filter((item) => {
       const date = new Date(item.date_hour);
       const monthYear = `${date.toLocaleString("default", {
@@ -28,6 +29,7 @@ const CompShowReports = () => {
       })} ${date.getFullYear()}`;
       return monthYear === selectedMonthYear;
     })
+    //Una vez que se filtra, aplica un reduce para guardar un objeto con el numero de semana como clave y como valor el numero de litros
     .reduce((acc, item) => {
       const date = new Date(item.date_hour);
       const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -37,7 +39,7 @@ const CompShowReports = () => {
         (date.getDate() + firstDayOfMonth.getDay()) / 7
       );
 
-      // Acumula el total de litros de acuerdo a la semana, si cambia vuelve a cero
+      // Acumula el total de litros de acuerdo a la semana, si cambia vuelve a cero para empezar acumular la siguiente semana calculada arriba
       if (!acc[weekOfMonth]) {
         acc[weekOfMonth] = 0;
       }
@@ -57,7 +59,7 @@ const CompShowReports = () => {
     ),
   }));
 
-  //Extraer meses y años
+  //Extraer meses y años en un useState y que sean unicos, ejemplo: October 2023
   const extractMonthsAndYears = (data) => {
     const uniqueMonthsAndYearsSet = new Set(
       data.map((item) => {

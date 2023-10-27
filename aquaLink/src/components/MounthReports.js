@@ -3,21 +3,14 @@ import { View, Text, StyleSheet } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 
-const CompShowReports = () => {
-  const [reports, setReports] = useState([]);
+const MounthReports = (props) => {
+  const { reports } = props;
   const [monthsAndYears, setMonthsAndYears] = useState([]);
   const [selectedMonthYear, setSelectedMonthYear] = useState("");
 
   useEffect(() => {
-    getReports();
-  }, []);
-
-  const getReports = async () => {
-    const res = await fetch("http://10.0.2.2:8000/reports"); //10.0.2.2:8000 para Android Studio y localhost:8000 para dispositivos fisicos
-    const data = await res.json();
-    setReports(data);
-    extractMonthsAndYears(data);
-  };
+    extractMonthsAndYears(reports);
+  }, [reports]);
 
   // Agrupar los informes por semana y calcular la suma total de litros
   const monthlyData = reports
@@ -60,9 +53,9 @@ const CompShowReports = () => {
   }));
 
   //Extraer meses y años en un useState y que sean unicos, ejemplo: October 2023
-  const extractMonthsAndYears = (data) => {
+  const extractMonthsAndYears = () => {
     const uniqueMonthsAndYearsSet = new Set(
-      data.map((item) => {
+      reports.map((item) => {
         const date = new Date(item.date_hour);
         return `${date.toLocaleString("default", {
           month: "long",
@@ -76,7 +69,8 @@ const CompShowReports = () => {
   return (
     <View>
       <View>
-        <Text>Selecciona el mes y el año:</Text>
+        <Text style={styles.headerText}>Reporte mensual</Text>
+        <Text style={styles.text}>Selecciona el mes y el año</Text>
         <Picker
           selectedValue={selectedMonthYear}
           onValueChange={(itemValue) => setSelectedMonthYear(itemValue)}
@@ -85,25 +79,26 @@ const CompShowReports = () => {
             <Picker.Item key={index} label={monthYear} value={monthYear} />
           ))}
         </Picker>
-        <Text>Tu escogiste: {selectedMonthYear}</Text>
       </View>
       <View style={styles.barChart}>
         <BarChart
+          showFractionalValue
+          showYAxisIndices
           barWidth={30} // Ajusta el ancho del gráfico a un valor mayor
           noOfSections={3}
           barBorderRadius={4}
           frontColor="#D2EAEE"
           data={barData}
-          yAxisThickness={0}
-          xAxisThickness={0}
-          labelStyle={{ fontSize: 6 }} // Ajusta el tamaño de fuente más pequeño para las etiquetas
+          yAxisThickness={0.5}
+          xAxisThickness={1}
+          isAnimated
         />
       </View>
     </View>
   );
 };
 
-export default CompShowReports;
+export default MounthReports;
 
 const styles = StyleSheet.create({
   container: {
@@ -114,11 +109,16 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     marginBottom: 10,
+    textAlign: "center",
   },
   datePicker: {
     marginBottom: 20,
   },
   barChart: {
     width: "80%",
+  },
+  text: {
+    textAlign: "center",
+    marginBottom: 10,
   },
 });

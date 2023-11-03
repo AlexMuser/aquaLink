@@ -3,8 +3,12 @@ import { StyleSheet, Text, View } from "react-native";
 import MounthReports from "./src/components/MounthReports";
 import { useEffect, useState } from "react";
 import DailyReports from "./src/components/DailyReports";
+import YearlyReports from "./src/components/YearlyReports";
+import LoadingApp from "./src/components/screens/LoadingApp";
+import TabNavApp from "./src/components/screens/TabNavApp";
 
 export default function App() {
+  //Arreglo con la información
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
@@ -12,27 +16,14 @@ export default function App() {
   }, []);
 
   const getReports = async () => {
-    const res = await fetch("http://192.168.64.1:8000/reports"); //10.0.2.2:8000 para Android Studio y localhost:8000 para dispositivos fisicos
+    //Recopilar la información con la ruta generada por el API
+    const res = await fetch("http://192.168.100.4:8000/reports");
     const data = await res.json();
     setReports(data);
   };
   return (
-    <View style={styles.container}>
-      {reports.length > 0 ? (
-        <DailyReports reports={reports} />
-      ) : (
-        <Text>No hay informes disponibles.</Text>
-      )}
-      <StatusBar style="auto" />
-    </View>
+    <>
+      <TabNavApp />
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

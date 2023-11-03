@@ -47,7 +47,7 @@ const MounthReports = (props) => {
     label,
     topLabelComponent: () => (
       <Text style={{ color: "black", fontSize: 12, marginTop: 4 }}>
-        {value}
+        {value + " L"}
       </Text>
     ),
   }));
@@ -84,7 +84,7 @@ const MounthReports = (props) => {
         <BarChart
           showFractionalValue
           showYAxisIndices
-          barWidth={30} // Ajusta el ancho del gráfico a un valor mayor
+          barWidth={35} // Ajusta el ancho del gráfico a un valor mayor
           noOfSections={3}
           barBorderRadius={4}
           frontColor="#D2EAEE"
@@ -94,6 +94,7 @@ const MounthReports = (props) => {
           isAnimated
         />
       </View>
+      <Text style={styles.week}>Semana</Text>
     </View>
   );
 };
@@ -118,6 +119,10 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   text: {
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  week: {
     textAlign: "center",
     marginBottom: 10,
   },

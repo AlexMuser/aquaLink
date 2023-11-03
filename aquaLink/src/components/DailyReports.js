@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Button } from "react-native";
+import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { BarChart } from "react-native-gifted-charts";
 
@@ -63,9 +63,13 @@ const DailyReports = (props) => {
 
   return (
     <View>
-      <Button title="Seleccionar Fecha" onPress={showDatePicker} />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={showDatePicker}>
+          <Text style={styles.buttonText}>Seleccionar Fecha</Text>
+        </TouchableOpacity>
+      </View>
       <Text>Fecha Seleccionada: {selectedDate.toDateString()}</Text>
-      <View style={{ width: "100%", height: 200 }}>
+      <View style={styles.barChart}>
         <BarChart
           data={createDailyBarData(dailyData)}
           xKey="label"
@@ -92,3 +96,46 @@ const DailyReports = (props) => {
 };
 
 export default DailyReports;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerText: {
+    fontSize: 16,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  barChart: {
+    width: "80%",
+  },
+  text: {
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    margin: 10,
+  },
+  button: {
+    width: 150,
+    height: 40,
+    backgroundColor: "rgba(185, 232, 254, 1)",
+    borderWidth: 1,
+    borderColor: "rgba(5, 93, 135, 1)",
+    borderRadius: 20,
+  },
+  buttonText: {
+    width: 150,
+    height: 60,
+    textAlign: "center",
+    lineHeight: 35,
+    color: "rgba(1, 110, 163, 1)",
+    fontSize: 12,
+    fontWeight: "400",
+  },
+});

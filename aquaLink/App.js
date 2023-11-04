@@ -6,6 +6,7 @@ import DailyReports from "./src/components/DailyReports";
 import YearlyReports from "./src/components/YearlyReports";
 import LoadingApp from "./src/components/screens/LoadingApp";
 import TabNavApp from "./src/components/screens/TabNavApp";
+import { NotificationProvider } from "./src/components/NotificationProvider";
 
 export default function App() {
   //Arreglo con la información
@@ -22,8 +23,8 @@ export default function App() {
     setReports(data);
   };
   return (
-    <>
+    <NotificationProvider>
       <TabNavApp />
-    </>
+    </NotificationProvider>
   );
 }

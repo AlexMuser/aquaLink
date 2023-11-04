@@ -4,20 +4,79 @@ import DailyReports from "../DailyReports";
 import YearlyReports from "../YearlyReports";
 import MounthReports from "../MounthReports";
 import WeeklyReports from "../WeeklyReports";
+import { API_BASE_URL, ESP32_URL } from "../config";
 
 export default function IndexApp() {
   //Arreglo con la información
   const [reports, setReports] = useState([]);
+  const [data, setData] = useState({
+    total_liters: 0,
+    date_hour: new Date().toISOString().split("T")[0] + "T00:00:00.000Z",
+  });
 
   useEffect(() => {
     getReports();
   }, []);
 
+  useEffect(() => {
+    getESP32();
+  }, []);
+
+  useEffect(() => {
+    // Llamar a updateTotalLiters cada 1 minuto (60000 milisegundos)
+    const interval = setInterval(getESP32, 60000);
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  const getESP32 = async () => {
+    try {
+      // Recopilar la información con la ruta generada por el API
+      const res = await fetch(`${ESP32_URL}/json`);
+
+      if (!res.ok) {
+        throw new Error(`Error en la solicitud: ${res.status}`);
+      }
+
+      const jsonData = await res.json();
+      const { hour, total_liters } = jsonData;
+
+      const currentDateTime = new Date();
+      currentDateTime.setHours(hour, 0, 0, 0);
+      // Obtener la hora local en formato de cadena
+      const date_hour = currentDateTime.toLocaleString("es-MX", {
+        timeZone: "America/Mexico_City",
+      });
+
+      setData({ total_liters, date_hour });
+    } catch (error) {
+      // Manejar el error de la solicitud de red
+      console.error("Error en la solicitud de red con el ESP32:", error);
+      // Puedes agregar un manejo adicional aquí si es necesario
+    }
+  };
+
   const getReports = async () => {
-    //Recopilar la información con la ruta generada por el API
-    const res = await fetch("http://192.168.100.4:8000/reports");
-    const data = await res.json();
-    setReports(data);
+    try {
+      // Recopilar la información con la ruta generada por el API
+      const res = await fetch(`${API_BASE_URL}/reports`);
+
+      if (!res.ok) {
+        throw new Error(`Error en la solicitud: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setReports(data);
+    } catch (error) {
+      // Manejar el error de la solicitud de red
+      console.error("Error en la solicitud de red con la API:", error);
+      // Puedes agregar un manejo adicional aquí si es necesario
+    }
   };
 
   const [activeButton, setActiveButton] = useState(null);
@@ -204,27 +263,25 @@ export default function IndexApp() {
 
 const styles = StyleSheet.create({
   view: {
-    flex: 1,
-    backgroundColor: "#35c3fb",
+    flex: 0.9,
     alignItems: "center",
     justifyContent: "center",
   },
   consumoContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
-    padding: 10,
+    backgroundColor: "#e0f3fe",
     shadowColor: "#35c3fb",
     shadowOpacity: 0.9,
     shadowRadius: 10,
-    elevation: 5,
-    width: "100%",
+    padding: 10,
+    width: "110%",
     overflow: "hidden",
-    borderColor: "rgba(185, 232, 254, 0.5)",
+    borderColor: "#b9e8fe",
     borderWidth: 5,
-    marginTop: 50,
+    marginTop: 110,
   },
   consumo: {
     textAlign: "center",
-    color: "rgba(1, 110, 163, 1)",
+    color: "black",
     fontSize: 32,
     fontWeight: "400",
   },
@@ -256,19 +313,19 @@ const styles = StyleSheet.create({
   graph: {
     alignItems: "center",
     justifyContent: "center",
-    margin: 20,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 20,
     width: "100%",
   },
   square: {
     width: 400,
-    height: 450,
+    height: 400,
     borderWidth: 0,
     borderColor: "black",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 10,
   },
   welcomeContainer: {
     justifyContent: "center",

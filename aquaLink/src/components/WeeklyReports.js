@@ -126,7 +126,7 @@ const WeekReports = (props) => {
             barWidth={30}
             noOfSections={7}
             barBorderRadius={4}
-            frontColor="#D2EAEE"
+            frontColor="#b9e8fe"
             data={dailyBarData}
             yAxisThickness={0.5}
             xAxisThickness={1}

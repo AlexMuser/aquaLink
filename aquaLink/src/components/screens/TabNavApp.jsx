@@ -1,6 +1,8 @@
 import * as React from "react";
 import {
   Image,
+  ImageBackground,
+  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -8,6 +10,7 @@ import {
 } from "react-native";
 import { TabView, SceneMap, TabBar } from "react-native-tab-view";
 import IndexApp from "./IndexApp";
+import SettingsApp from "./SettingsApp";
 
 const FirstRoute = () => (
   <View style={{ flex: 1, backgroundColor: "#ff4081" }} />
@@ -20,7 +23,9 @@ const SecondRoute = () => (
 );
 
 const ThirdRoute = () => (
-  <View style={{ flex: 1, backgroundColor: "#673ab7" }} />
+  <View style={{ flex: 1 }}>
+    <SettingsApp />
+  </View>
 );
 
 const renderScene = SceneMap({
@@ -46,38 +51,43 @@ export default function TabNavApp() {
   ]);
 
   return (
-    <View style={{ flex: 1 }}>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
-        tabBarPosition="bottom"
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
-            style={{ backgroundColor: "rgb(7, 49, 74)" }}
-            indicatorStyle={{ backgroundColor: "white" }} // Cambia el color de la barra indicadora
-            renderLabel={({ route, focused }) => (
-              <View style={styles.tabBarLabelContainer}>
-                <Image
-                  source={iconMapping[route.key]}
-                  style={styles.tabImage}
-                />
-                <Text
-                  style={[
-                    styles.tabLabelText,
-                    focused && styles.tabLabelFocused,
-                  ]}
-                >
-                  {route.title}
-                </Text>
-              </View>
-            )}
-          />
-        )}
-      />
-    </View>
+    <ImageBackground
+      source={require("../../../assets/background.png")}
+      style={styles.backgroundImage}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+          tabBarPosition="bottom"
+          renderTabBar={(props) => (
+            <TabBar
+              {...props}
+              style={{ backgroundColor: "rgb(7, 49, 74)" }}
+              indicatorStyle={{ backgroundColor: "white" }} // Cambia el color de la barra indicadora
+              renderLabel={({ route, focused }) => (
+                <View style={styles.tabBarLabelContainer}>
+                  <Image
+                    source={iconMapping[route.key]}
+                    style={styles.tabImage}
+                  />
+                  <Text
+                    style={[
+                      styles.tabLabelText,
+                      focused && styles.tabLabelFocused,
+                    ]}
+                  >
+                    {route.title}
+                  </Text>
+                </View>
+              )}
+            />
+          )}
+        />
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
@@ -86,13 +96,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabImage: {
-    width: 44,
-    height: 44,
+    width: 24,
+    height: 24,
   },
   tabLabelText: {
     color: "gray",
   },
   tabLabelFocused: {
     color: "white",
+  },
+  backgroundImage: {
+    flex: 1,
+    resizeMode: "cover",
+    width: "100%",
+    height: "100%",
   },
 });

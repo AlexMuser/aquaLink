@@ -47,7 +47,7 @@ const MounthReports = (props) => {
     label,
     topLabelComponent: () => (
       <Text style={{ color: "black", fontSize: 12, marginTop: 4 }}>
-        {value + " L"}
+        {value.toFixed(0) + " L"}
       </Text>
     ),
   }));
@@ -84,7 +84,7 @@ const MounthReports = (props) => {
         <BarChart
           showFractionalValue
           showYAxisIndices
-          barWidth={35} // Ajusta el ancho del gráfico a un valor mayor
+          barWidth={45} // Ajusta el ancho del gráfico a un valor mayor
           noOfSections={3}
           barBorderRadius={4}
           frontColor="#D2EAEE"

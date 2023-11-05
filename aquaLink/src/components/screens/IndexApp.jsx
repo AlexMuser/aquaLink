@@ -5,6 +5,8 @@ import YearlyReports from "../YearlyReports";
 import MounthReports from "../MounthReports";
 import WeeklyReports from "../WeeklyReports";
 import { API_BASE_URL, ESP32_URL } from "../config";
+import axios from "axios";
+import { useNotification } from "../NotificationProvider";
 
 export default function IndexApp() {
   //Arreglo con la información
@@ -13,6 +15,8 @@ export default function IndexApp() {
     total_liters: 0,
     date_hour: new Date().toISOString().split("T")[0] + "T00:00:00.000Z",
   });
+
+  const { showWarning } = useNotification();
 
   useEffect(() => {
     getReports();
@@ -31,7 +35,8 @@ export default function IndexApp() {
   }, []);
 
   useEffect(() => {
-    console.log(data);
+    //console.log(data);
+    findReportsByDate();
   }, [data]);
 
   const getESP32 = async () => {
@@ -48,10 +53,17 @@ export default function IndexApp() {
 
       const currentDateTime = new Date();
       currentDateTime.setHours(hour, 0, 0, 0);
-      // Obtener la hora local en formato de cadena
-      const date_hour = currentDateTime.toLocaleString("es-MX", {
-        timeZone: "America/Mexico_City",
-      });
+
+      const date = currentDateTime.getDate().toString().padStart(2, "0");
+      const month = (currentDateTime.getMonth() + 1)
+        .toString()
+        .padStart(2, "0");
+      const year = currentDateTime.getFullYear();
+      const hours = currentDateTime.getHours().toString().padStart(2, "0");
+      const minutes = currentDateTime.getMinutes().toString().padStart(2, "0");
+      const seconds = currentDateTime.getSeconds().toString().padStart(2, "0");
+
+      const date_hour = `${date}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 
       setData({ total_liters, date_hour });
     } catch (error) {
@@ -83,6 +95,144 @@ export default function IndexApp() {
 
   const handleButtonPress = (buttonName) => {
     setActiveButton(buttonName);
+  };
+
+  //Funcion para crear un reporte en la BD
+  const createReport = async (newReportData) => {
+    try {
+      // Realizar una solicitud POST a la API para crear un nuevo informe
+      const response = await axios.post(
+        `${API_BASE_URL}/reports`,
+        newReportData,
+        {
+          headers: {
+            "Content-Type": "application/json", // Asegurarse de establecer el tipo de contenido
+          },
+        }
+      );
+
+      // Verificar la respuesta y manejarla según sea necesario
+      if (response.status === 200) {
+        //console.log("Informe creado correctamente.");
+        getReports();
+      } else {
+        console.error("Error al crear el informe.");
+      }
+    } catch (error) {
+      console.error("Error al hacer la solicitud POST:", error);
+    }
+  };
+
+  //Funcion para actualizar en la BD
+  const updateReport = async (reportId, updatedReportData) => {
+    try {
+      // Realizar una solicitud PUT a la API para actualizar el informe existente
+      const response = await axios.put(
+        `${API_BASE_URL}/reports/${reportId}`,
+        updatedReportData,
+        {
+          headers: {
+            "Content-Type": "application/json", // Asegurarse de establecer el tipo de contenido
+          },
+        }
+      );
+
+      // Verificar la respuesta y manejarla según sea necesario
+      if (response.status === 200) {
+        //console.log("Informe actualizado correctamente.");
+        getReports(); // Opcional: Realizar una recarga de informes o cualquier otra acción necesaria
+      } else {
+        console.error("Error al actualizar el informe.");
+      }
+    } catch (error) {
+      console.error("Error al hacer la solicitud PUT:", error);
+    }
+  };
+
+  //Funcion para encontrar id del reporte segun la fecha
+  function findReportIdByDate() {
+    const indiceDondeSeEncontro = reports.findIndex((report) => {
+      // Crea una variable con la fecha y hora para buscar si coincide un valor
+      const isoDate = new Date(report.date_hour);
+
+      // Obtén la hora, minutos y segundos sin afectar la zona horaria
+      const hours = isoDate.getUTCHours().toString().padStart(2, "0");
+      const minutes = isoDate.getUTCMinutes().toString().padStart(2, "0");
+      const seconds = isoDate.getUTCSeconds().toString().padStart(2, "0");
+
+      // Formatear la fecha en el formato deseado sin cambiar la hora
+      const formattedDate =
+        isoDate.toLocaleDateString("es-MX", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }) + ` ${hours}:${minutes}:${seconds}`;
+
+      // Regresa true si encuentra la fecha o false si no lo encuentra en reports
+      return formattedDate === data.date_hour;
+    });
+
+    if (indiceDondeSeEncontro !== -1) {
+      return reports[indiceDondeSeEncontro].id;
+    } else {
+      return null; // O cualquier otro valor que desees cuando no se encuentra una coincidencia.
+    }
+  }
+
+  //Funcion para visualizar si ya existe en la base de datos lo que nos arroja el ESP32
+  const findReportsByDate = () => {
+    const foundReport = reports.some((report) => {
+      // Crea una variable con la fecha y hora para buscar si coincide un valor
+      const isoDate = new Date(report.date_hour);
+
+      // Obtén la hora, minutos y segundos sin afectar la zona horaria
+      const hours = isoDate.getUTCHours().toString().padStart(2, "0");
+      const minutes = isoDate.getUTCMinutes().toString().padStart(2, "0");
+      const seconds = isoDate.getUTCSeconds().toString().padStart(2, "0");
+
+      // Formatear la fecha en el formato deseado sin cambiar la hora
+      const formattedDate =
+        isoDate.toLocaleDateString("es-MX", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }) + ` ${hours}:${minutes}:${seconds}`;
+
+      //Aqui regresa true si encuentra la fecha o false si no lo encuentra en reports
+      return formattedDate === data.date_hour;
+    });
+
+    // Dividir la cadena en día, mes, año y hora
+    var parts = data.date_hour.split(" ");
+    var dateParts = parts[0].split("/");
+    var timePart = parts[1];
+
+    // Formatear la fecha en el nuevo formato
+    var year = dateParts[2];
+    var month = dateParts[1];
+    var day = dateParts[0];
+    var newFormattedDate = `${year}-${month}-${day}T${timePart}.000Z`;
+
+    //Dependiendo si se encuentra o no el reporte, se crea o actualiza
+    if (foundReport) {
+      const updReport = {
+        totalLiters: data.total_liters,
+      };
+
+      if (data.total_liters > 0) {
+        updateReport(findReportIdByDate(), updReport);
+      }
+    } else {
+      //console.log(newFormattedDate);
+      //console.log(data.total_liters);
+      const newReport = {
+        date_hour: newFormattedDate,
+        totalLiters: data.total_liters,
+      };
+      if (newReport.totalLiters > 0) {
+        createReport(newReport);
+      }
+    }
   };
 
   const renderContent = () => {

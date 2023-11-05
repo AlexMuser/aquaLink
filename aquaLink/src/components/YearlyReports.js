@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 
@@ -36,7 +36,7 @@ const YearlyReports = (props) => {
     label,
     topLabelComponent: () => (
       <Text style={{ color: "black", fontSize: 12, marginTop: 4 }}>
-        {value}
+        {value.toFixed(0) + " L"}
       </Text>
     ),
   }));
@@ -54,34 +54,39 @@ const YearlyReports = (props) => {
   };
 
   return (
-    <View>
+    <ScrollView
+      horizontal={true}
+      contentContainerStyle={styles.scrollViewContent}
+    >
       <View>
-        <Text style={styles.headerText}>Reporte anual</Text>
-        <Text style={styles.text}>Selecciona el año</Text>
-        <Picker
-          selectedValue={selectedYear}
-          onValueChange={(itemValue) => setSelectedYear(itemValue)}
-        >
-          {years.map((year, index) => (
-            <Picker.Item key={index} label={year.toString()} value={year} />
-          ))}
-        </Picker>
+        <View>
+          <Text style={styles.headerText}>Reporte anual</Text>
+          <Text style={styles.text}>Selecciona el año</Text>
+          <Picker
+            selectedValue={selectedYear}
+            onValueChange={(itemValue) => setSelectedYear(itemValue)}
+          >
+            {years.map((year, index) => (
+              <Picker.Item key={index} label={year.toString()} value={year} />
+            ))}
+          </Picker>
+        </View>
+        <View style={styles.barChart}>
+          <BarChart
+            showFractionalValue
+            showYAxisIndices
+            barWidth={80}
+            noOfSections={3}
+            barBorderRadius={4}
+            frontColor="#D2EAEE"
+            data={barData}
+            yAxisThickness={0.5}
+            xAxisThickness={1}
+            isAnimated
+          />
+        </View>
       </View>
-      <View style={styles.barChart}>
-        <BarChart
-          showFractionalValue
-          showYAxisIndices
-          barWidth={30}
-          noOfSections={3}
-          barBorderRadius={4}
-          frontColor="#D2EAEE"
-          data={barData}
-          yAxisThickness={0.5}
-          xAxisThickness={1}
-          isAnimated
-        />
-      </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -102,10 +107,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   barChart: {
-    width: "80%",
+    width: "100%",
   },
   text: {
     textAlign: "center",
     marginBottom: 10,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

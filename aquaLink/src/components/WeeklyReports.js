@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
 
@@ -82,7 +82,7 @@ const WeekReports = (props) => {
     label,
     topLabelComponent: () => (
       <Text style={{ color: "black", fontSize: 12, marginTop: 4 }}>
-        {value + " L"}
+        {value.toFixed(0) + " L"}
       </Text>
     ),
   }));
@@ -99,42 +99,47 @@ const WeekReports = (props) => {
   };
 
   return (
-    <View>
-      <Text style={styles.headerText}>Reporte semanal</Text>
-      <Text style={styles.text}>Selecciona la semana</Text>
-      <View style={styles.container}>
-        <View style={styles.pickerStyle}>
-          <Picker
-            selectedValue={selectedWeek}
-            onValueChange={(itemValue) => setSelectedWeek(itemValue)}
-          >
-            {weeksAndMonthsAndYears.map((weekMonthYear, index) => (
-              <Picker.Item
-                key={index}
-                label={weekMonthYear}
-                value={weekMonthYear}
-              />
-            ))}
-          </Picker>
+    <ScrollView
+      horizontal={true}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <View>
+        <Text style={styles.headerText}>Reporte semanal</Text>
+        <Text style={styles.text}>Selecciona la semana</Text>
+        <View style={styles.container}>
+          <View style={styles.pickerStyle}>
+            <Picker
+              selectedValue={selectedWeek}
+              onValueChange={(itemValue) => setSelectedWeek(itemValue)}
+            >
+              {weeksAndMonthsAndYears.map((weekMonthYear, index) => (
+                <Picker.Item
+                  key={index}
+                  label={weekMonthYear}
+                  value={weekMonthYear}
+                />
+              ))}
+            </Picker>
+          </View>
         </View>
+        {selectedWeek && (
+          <View style={styles.barChart}>
+            <BarChart
+              showFractionalValue
+              showYAxisIndices
+              barWidth={45}
+              noOfSections={7}
+              barBorderRadius={4}
+              frontColor="#b9e8fe"
+              data={dailyBarData}
+              yAxisThickness={0.5}
+              xAxisThickness={1}
+              isAnimated
+            />
+          </View>
+        )}
       </View>
-      {selectedWeek && (
-        <View style={styles.barChart}>
-          <BarChart
-            showFractionalValue
-            showYAxisIndices
-            barWidth={30}
-            noOfSections={7}
-            barBorderRadius={4}
-            frontColor="#b9e8fe"
-            data={dailyBarData}
-            yAxisThickness={0.5}
-            xAxisThickness={1}
-            isAnimated
-          />
-        </View>
-      )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -155,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   barChart: {
-    width: "80%",
+    width: "100%",
   },
   text: {
     textAlign: "center",
@@ -168,5 +173,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     marginBottom: 10,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

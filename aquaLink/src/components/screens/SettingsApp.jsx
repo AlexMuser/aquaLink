@@ -4,49 +4,81 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
+  RefreshControl,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useNotification } from "../NotificationProvider";
 import { API_BASE_URL } from "../config";
+import NotificationMovil from "../NotificationMovil";
 
 export default function SettingsApp() {
   const { showWarning } = useNotification();
   const [isAlertActive, setIsAlertActive] = useState(false);
   const [isNotificationActive, setIsNotificationActive] = useState(false);
-  const [litersLim, setLitersLim] = useState("");
+  const [litersLim, setLitersLim] = useState(0);
   const [totalLitrosDiaActual, setTotalLitrosDiaActual] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [reports, setReports] = useState([]);
 
   useEffect(() => {
-    getTotalLitrosDiaActual();
+    getReports();
   }, []);
 
-  const getTotalLitrosDiaActual = async () => {
+  useEffect(() => {
+    // Llamar a updateTotalLiters cada 1 minuto (60000 milisegundos)
+    const interval = setInterval(getReports, 10000);
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     // Establecer la zona horaria a la de México
     const mexicoTimeZone = "America/Mexico_City";
     const currentDate = new Date()
       .toLocaleString("en-US", { timeZone: mexicoTimeZone })
       .split(", ")[0];
 
-    // Recopilar la información con la ruta generada por el API
-    const res = await fetch(`${API_BASE_URL}/reports`);
-    const data = await res.json();
-
     // Filtrar los datos según la fecha actual en la zona horaria de México
-    const litrosDiaActual = data
+    const litrosDiaActual = reports
       .filter((report) => {
-        const reportDate = new Date(report.createdAt)
+        const reportDate = new Date(report.date_hour)
           .toLocaleString("en-US", { timeZone: mexicoTimeZone })
           .split(", ")[0];
         return reportDate === currentDate;
       })
       .reduce((total, report) => total + report.totalLiters, 0);
 
-    setTotalLitrosDiaActual(litrosDiaActual);
-  };
-
-  useEffect(() => {
+    console.log(litrosDiaActual);
+    console.log(isAlertActive);
     console.log(litersLim);
-  }, [litersLim]);
+
+    if (litrosDiaActual > litersLim && isAlertActive && litersLim > 0) {
+      showWarning("Se supero el limite de consumo diario");
+    }
+
+    setTotalLitrosDiaActual(litrosDiaActual);
+  }, [reports]);
+
+  const getReports = async () => {
+    try {
+      // Recopilar la información con la ruta generada por el API
+      const res = await fetch(`${API_BASE_URL}/reports`);
+
+      if (!res.ok) {
+        throw new Error(`Error en la solicitud: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      setReports(data);
+    } catch (error) {
+      // Manejar el error de la solicitud de red
+      console.error("Error en la solicitud de red con la API:", error);
+      // Puedes agregar un manejo adicional aquí si es necesario
+    }
+  };
 
   const handleShowWarning = () => {
     if (isAlertActive) {
@@ -64,106 +96,119 @@ export default function SettingsApp() {
     }
   };
 
+  const onRefresh = () => {
+    // Maneja la lógica de recarga aquí
+    getReports();
+    setIsRefreshing(false);
+  };
+
   /*const handleShowWarning = () => {
     showWarning("Se supero el limite de consumo diario");
   };*/
 
   return (
-    <View style={styles.view}>
-      {/* Cuadro de ajuste */}
-      <View style={styles.ajusteContainer}>
-        <Text style={styles.ajuste}>{`Ajustes`}</Text>
-      </View>
-      {/* Cuadro de activar y establecer alerta */}
-      <View style={styles.alertaContainer}>
-        <View style={styles.activarContainer}>
-          <Text style={styles.ajusteText}>Alerta de consumo</Text>
+    <ScrollView
+      refreshControl={
+        // Agrega el RefreshControl
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.view}>
+        {/* Cuadro de ajuste */}
+        <View style={styles.ajusteContainer}>
+          <Text style={styles.ajuste}>{`Ajustes`}</Text>
+        </View>
+        {/* Cuadro de activar y establecer alerta */}
+        <View style={styles.alertaContainer}>
+          <View style={styles.activarContainer}>
+            <Text style={styles.ajusteText}>Alerta de consumo</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: isAlertActive
+                      ? "rgba(185, 232, 254, 1)"
+                      : "#ffeceb",
+                    borderColor: isAlertActive ? "#016ea3" : "red", // Cambia el color del borde
+                  },
+                ]}
+                onPress={handleShowWarning}
+              >
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: isAlertActive ? "#016ea3" : "red" },
+                  ]}
+                >
+                  {isAlertActive ? "Activado" : "Desactivado"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={{ alignItems: "center" }}>
+            <TextInput
+              onChangeText={(text) => setLitersLim(text)}
+              style={styles.input}
+              placeholder="Litros"
+              keyboardType="numeric"
+            />
+          </View>
+          <View>
+            <Text style={styles.litros}>
+              Total de consumo de hoy: {totalLitrosDiaActual.toFixed(0)} Litros
+            </Text>
+          </View>
+        </View>
+        {/* Cuadro de descargas */}
+        <View style={styles.descargaContainer}>
+          <Text style={styles.ajusteText}>Descargar historial</Text>
+          <View style={styles.buttonDescargas}>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Diario</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Semanal</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.buttonDescargas}>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Mensual</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Anual</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* Cuadro de notificaciones
+        <View style={styles.notificacionContainer}>
+          <Text style={styles.ajusteText}>Notificaciones</Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[
                 styles.button,
                 {
-                  backgroundColor: isAlertActive
+                  backgroundColor: isNotificationActive
                     ? "rgba(185, 232, 254, 1)"
                     : "#ffeceb",
-                  borderColor: isAlertActive ? "#016ea3" : "red", // Cambia el color del borde
+                  borderColor: isNotificationActive ? "#016ea3" : "red",
                 },
               ]}
-              onPress={handleShowWarning}
+              onPress={handleShowNotification}
             >
               <Text
                 style={[
                   styles.buttonText,
-                  { color: isAlertActive ? "#016ea3" : "red" },
+                  { color: isNotificationActive ? "#016ea3" : "red" },
                 ]}
               >
-                {isAlertActive ? "Activado" : "Desactivado"}
+                {isNotificationActive ? "Activado" : "Desactivado"}
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-        <View style={{ alignItems: "center" }}>
-          <TextInput
-            onChangeText={(text) => setLitersLim(text)}
-            style={styles.input}
-            placeholder="Litros"
-            keyboardType="numeric"
-          />
-        </View>
-        <View>
-          <Text style={styles.litros}>
-            Total de consumo de hoy: {totalLitrosDiaActual} Litros
-          </Text>
-        </View>
+        </View>*/}
       </View>
-      {/* Cuadro de descargas */}
-      <View style={styles.descargaContainer}>
-        <Text style={styles.ajusteText}>Descargar historial</Text>
-        <View style={styles.buttonDescargas}>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Diario</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Semanal</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.buttonDescargas}>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Mensual</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>Anual</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      {/* Cuadro de notificaciones */}
-      <View style={styles.notificacionContainer}>
-        <Text style={styles.ajusteText}>Notificaciones</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              {
-                backgroundColor: isNotificationActive
-                  ? "rgba(185, 232, 254, 1)"
-                  : "#ffeceb",
-                borderColor: isNotificationActive ? "#016ea3" : "red",
-              },
-            ]}
-            onPress={handleShowNotification}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                { color: isNotificationActive ? "#016ea3" : "red" },
-              ]}
-            >
-              {isNotificationActive ? "Activado" : "Desactivado"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -183,7 +228,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderColor: "#b9e8fe",
     borderWidth: 5,
-    marginTop: 110,
+    marginTop: 46.7,
   },
   ajuste: {
     textAlign: "center",
@@ -260,6 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     padding: 10,
+    marginTop: 5,
   },
   buttonDescargas: {
     flexDirection: "row",

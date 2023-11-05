@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { BarChart } from "react-native-gifted-charts";
+import { format } from "date-fns";
 
 const DailyReports = (props) => {
   const { reports } = props;
@@ -33,10 +41,10 @@ const DailyReports = (props) => {
   const createDailyBarData = (data) => {
     return data.map((item) => ({
       value: item.value,
-      label: item.label,
+      label: item.label, // Mantén el formato de hora original
       topLabelComponent: () => (
         <Text style={{ color: "black", fontSize: 12, marginTop: 4 }}>
-          {item.value}
+          {item.value + " L"}
         </Text>
       ),
     }));
@@ -54,44 +62,53 @@ const DailyReports = (props) => {
         );
       })
       .map((item) => ({
-        label: new Date(item.date_hour).toLocaleTimeString(),
-        value: item.totalLiters,
+        label: new Date(item.date_hour).toLocaleTimeString("default", {
+          hour: "numeric",
+          hour12: true,
+          timeZone: "UTC",
+        }),
+        value: parseInt(item.totalLiters, 10), // Convierte a número usando parseInt
       }));
 
     setDailyData(dailyData);
   };
 
   return (
-    <View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={showDatePicker}>
-          <Text style={styles.buttonText}>Seleccionar Fecha</Text>
-        </TouchableOpacity>
-      </View>
-      <Text>Fecha Seleccionada: {selectedDate.toDateString()}</Text>
-      <View style={styles.barChart}>
-        <BarChart
-          data={createDailyBarData(dailyData)}
-          xKey="label"
-          yKey="value"
-          showFractionalValue
-          showYAxisIndices
-          barWidth={30}
-          noOfSections={3}
-          barBorderRadius={4}
-          frontColor="#D2EAEE"
-          yAxisThickness={0.5}
-          xAxisThickness={1}
-          isAnimated
+    <ScrollView
+      horizontal={true}
+      contentContainerStyle={styles.scrollViewContent}
+    >
+      <View style={styles.container}>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={showDatePicker}>
+            <Text style={styles.buttonText}>Seleccionar Fecha</Text>
+          </TouchableOpacity>
+        </View>
+        <Text>Fecha Seleccionada: {selectedDate.toDateString()}</Text>
+        <View style={styles.barChart}>
+          <BarChart
+            data={createDailyBarData(dailyData)}
+            xKey="label"
+            yKey="value"
+            showFractionalValue
+            showYAxisIndices
+            barWidth={50}
+            noOfSections={3}
+            barBorderRadius={4}
+            frontColor="#D2EAEE"
+            yAxisThickness={0.5}
+            xAxisThickness={1}
+            isAnimated
+          />
+        </View>
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
         />
       </View>
-      <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="date"
-        onConfirm={handleConfirm}
-        onCancel={hideDatePicker}
-      />
-    </View>
+    </ScrollView>
   );
 };
 
@@ -109,7 +126,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   barChart: {
-    width: "80%",
+    width: "100%", // Cambia el ancho al 100% en lugar del 80%
   },
   text: {
     textAlign: "center",
@@ -137,5 +154,10 @@ const styles = StyleSheet.create({
     color: "rgba(1, 110, 163, 1)",
     fontSize: 12,
     fontWeight: "400",
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

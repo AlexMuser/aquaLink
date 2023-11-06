@@ -4,19 +4,22 @@ import DailyReports from "../DailyReports";
 import YearlyReports from "../YearlyReports";
 import MounthReports from "../MounthReports";
 import WeeklyReports from "../WeeklyReports";
-import { API_BASE_URL, ESP32_URL } from "../config";
+//import { API_BASE_URL, ESP32_URL } from "../config";
 import axios from "axios";
-import { useNotification } from "../NotificationProvider";
+import { useConfig } from "../ConfigContext";
 
 export default function IndexApp() {
+  const { config } = useConfig();
+
+  const API_BASE_URL = config.API_BASE_URL;
+  const ESP32_URL = config.ESP32_URL;
+
   //Arreglo con la información
   const [reports, setReports] = useState([]);
   const [data, setData] = useState({
     total_liters: 0,
     date_hour: new Date().toISOString().split("T")[0] + "T00:00:00.000Z",
   });
-
-  const { showWarning } = useNotification();
 
   useEffect(() => {
     getReports();

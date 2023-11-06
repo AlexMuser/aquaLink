@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import { Picker } from "@react-native-picker/picker";
+import { DateTime } from "luxon";
 
 const MounthReports = (props) => {
   const { reports } = props;
@@ -12,31 +13,32 @@ const MounthReports = (props) => {
     extractMonthsAndYears(reports);
   }, [reports]);
 
-  // Agrupar los informes por semana y calcular la suma total de litros
+  // Crear el arreglo de datos para la gráfica
   const monthlyData = reports
-    //Se filtra los datos de acuerdo al mes y año seleccionado
     .filter((item) => {
-      const date = new Date(item.date_hour);
-      const monthYear = `${date.toLocaleString("default", {
-        month: "long",
-      })} ${date.getFullYear()}`;
+      const date = DateTime.fromISO(item.date_hour, { zone: "utc" });
+      const monthYear = date.toFormat("MMMM yyyy", { zone: "utc" });
       return monthYear === selectedMonthYear;
     })
-    //Una vez que se filtra, aplica un reduce para guardar un objeto con el numero de semana como clave y como valor el numero de litros
     .reduce((acc, item) => {
-      const date = new Date(item.date_hour);
-      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const date = DateTime.fromISO(item.date_hour, { zone: "utc" });
+      const startOfMonth = date.startOf("month");
+      const endOfMonth = date.endOf("month");
 
-      // Calcular el número de semana dentro del mes
-      const weekOfMonth = Math.ceil(
-        (date.getDate() + firstDayOfMonth.getDay()) / 7
-      );
+      let currentWeek = startOfMonth.startOf("week");
+      let weekOfMonth = 1;
 
-      // Acumula el total de litros de acuerdo a la semana, si cambia vuelve a cero para empezar acumular la siguiente semana calculada arriba
-      if (!acc[weekOfMonth]) {
-        acc[weekOfMonth] = 0;
+      while (currentWeek <= endOfMonth && weekOfMonth <= 5) {
+        if (date >= currentWeek && date <= currentWeek.endOf("week")) {
+          if (!acc[weekOfMonth]) {
+            acc[weekOfMonth] = 0;
+          }
+          acc[weekOfMonth] += item.totalLiters;
+          break;
+        }
+        currentWeek = currentWeek.plus({ weeks: 1 });
+        weekOfMonth++;
       }
-      acc[weekOfMonth] += item.totalLiters;
 
       return acc;
     }, {});
@@ -52,14 +54,12 @@ const MounthReports = (props) => {
     ),
   }));
 
-  //Extraer meses y años en un useState y que sean unicos, ejemplo: October 2023
+  // Extraer meses y años en un useState y que sean únicos, ejemplo: October 2023
   const extractMonthsAndYears = () => {
     const uniqueMonthsAndYearsSet = new Set(
       reports.map((item) => {
-        const date = new Date(item.date_hour);
-        return `${date.toLocaleString("default", {
-          month: "long",
-        })} ${date.getFullYear()}`;
+        const date = DateTime.fromISO(item.date_hour, { zone: "utc" });
+        return date.toFormat("MMMM yyyy", { zone: "utc" });
       })
     );
 
@@ -84,7 +84,7 @@ const MounthReports = (props) => {
         <BarChart
           showFractionalValue
           showYAxisIndices
-          barWidth={45} // Ajusta el ancho del gráfico a un valor mayor
+          barWidth={45}
           noOfSections={3}
           barBorderRadius={4}
           frontColor="#D2EAEE"

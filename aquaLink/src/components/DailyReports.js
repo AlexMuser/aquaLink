@@ -9,39 +9,39 @@ import {
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { BarChart } from "react-native-gifted-charts";
-import { format } from "date-fns";
+import { DateTime } from "luxon";
 
 const DailyReports = (props) => {
   const { reports } = props;
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(
+    DateTime.now().setZone("America/Mexico_City")
+  );
   const [dailyData, setDailyData] = useState([]);
 
   useEffect(() => {
     updateDailyData(selectedDate);
   }, [selectedDate, reports]);
 
-  // Función para mostrar el selector de fecha
   const showDatePicker = () => {
     setDatePickerVisibility(true);
   };
 
-  // Función para ocultar el selector de fecha
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
 
-  // Función para confirmar la fecha seleccionada en el selector
   const handleConfirm = (date) => {
-    setSelectedDate(date);
+    setSelectedDate(DateTime.fromJSDate(date).setZone("America/Mexico_City"));
     hideDatePicker();
   };
 
-  // Función para crear el formato de datos del gráfico diario
   const createDailyBarData = (data) => {
     return data.map((item) => ({
       value: item.value,
-      label: item.label, // Mantén el formato de hora original
+      label: DateTime.fromISO(item.label)
+        .setZone("America/Mexico_City")
+        .toLocaleString(DateTime.TIME_SIMPLE),
       topLabelComponent: () => (
         <Text style={{ color: "black", fontSize: 12, marginTop: 4 }}>
           {item.value + " L"}
@@ -50,25 +50,24 @@ const DailyReports = (props) => {
     }));
   };
 
-  // Función para actualizar los datos diarios en función de la fecha seleccionada
   const updateDailyData = (date) => {
     const dailyData = reports
       .filter((item) => {
-        const itemDate = new Date(item.date_hour);
+        const itemDate = DateTime.fromISO(item.date_hour, {
+          zone: "utc",
+        });
         return (
-          itemDate.getDate() === date.getDate() &&
-          itemDate.getMonth() === date.getMonth() &&
-          itemDate.getFullYear() === date.getFullYear()
+          itemDate.day === date.day &&
+          itemDate.month === date.month &&
+          itemDate.year === date.year
         );
       })
-      .map((item) => ({
-        label: new Date(item.date_hour).toLocaleTimeString("default", {
-          hour: "numeric",
-          hour12: true,
-          timeZone: "UTC",
-        }),
-        value: parseInt(item.totalLiters, 10), // Convierte a número usando parseInt
-      }));
+      .map((item) => {
+        return {
+          label: item.date_hour,
+          value: parseInt(item.totalLiters, 10),
+        };
+      });
 
     setDailyData(dailyData);
   };
@@ -84,7 +83,9 @@ const DailyReports = (props) => {
             <Text style={styles.buttonText}>Seleccionar Fecha</Text>
           </TouchableOpacity>
         </View>
-        <Text>Fecha Seleccionada: {selectedDate.toDateString()}</Text>
+        <Text>
+          Fecha Seleccionada: {selectedDate.toLocaleString(DateTime.DATE)}
+        </Text>
         <View style={styles.barChart}>
           <BarChart
             data={createDailyBarData(dailyData)}

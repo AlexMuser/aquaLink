@@ -9,10 +9,15 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useNotification } from "../NotificationProvider";
-import { API_BASE_URL } from "../config";
-import NotificationMovil from "../NotificationMovil";
+import { PDFDay, PDFMonths, PDFWeekly, PDFYears } from "../PDFComponent";
+import { useConfig } from "../ConfigContext";
 
 export default function SettingsApp() {
+  const { config } = useConfig();
+
+  const API_BASE_URL = config.API_BASE_URL;
+  const ESP32_URL = config.ESP32_URL;
+
   const { showWarning } = useNotification();
   const [isAlertActive, setIsAlertActive] = useState(false);
   const [isNotificationActive, setIsNotificationActive] = useState(false);
@@ -164,20 +169,13 @@ export default function SettingsApp() {
         <View style={styles.descargaContainer}>
           <Text style={styles.ajusteText}>Descargar historial</Text>
           <View style={styles.buttonDescargas}>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Diario</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Semanal</Text>
-            </TouchableOpacity>
+            {/* Se colocara cada boton */}
+            <PDFDay reports={reports} />
+            <PDFWeekly reports={reports} />
           </View>
           <View style={styles.buttonDescargas}>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Mensual</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Anual</Text>
-            </TouchableOpacity>
+            <PDFMonths reports={reports} />
+            <PDFYears reports={reports} />
           </View>
         </View>
         {/* Cuadro de notificaciones

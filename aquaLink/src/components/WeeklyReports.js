@@ -36,17 +36,16 @@ const WeekReports = (props) => {
       "Diciembre",
     ];
 
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth();
+    const day = date.getUTCDate();
+    const startDayOfWeek = date.getUTCDay();
 
-    const startDate = new Date(year, month, 1);
-    const startDayOfWeek = startDate.getDay();
-
-    let weekNumber = Math.ceil((day + startDayOfWeek) / 7);
+    // Ajuste para que la semana comience en Domingo (0)
+    let weekNumber = Math.ceil((day + 1 - startDayOfWeek) / 7);
 
     if (startDayOfWeek !== 0) {
-      // Adjust for the case where the first day of the month is not a Monday
+      // Si el primer día de la semana no es Domingo, ajustamos la semana
       if (weekNumber === 0) {
         weekNumber = Math.ceil((day - startDayOfWeek + 7) / 7);
       }

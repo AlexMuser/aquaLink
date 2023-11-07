@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderColor: "#b9e8fe",
     borderWidth: 5,
-    marginTop: 46.7,
+    marginTop: 86,
   },
   ajuste: {
     textAlign: "center",
